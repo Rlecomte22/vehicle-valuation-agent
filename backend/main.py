@@ -5,6 +5,19 @@ from report_generator import generate_pdf_report
 from fastapi.responses import FileResponse
 
 app = FastAPI(title="AI Vehicle Valuation Agent")
+from fastapi.middleware.cors import CORSMiddleware
+
+origins = [
+    "https://vehicle-valuation-agent.vercel.app",  # your frontend URL
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class VehicleRequest(BaseModel):
     vin: str
