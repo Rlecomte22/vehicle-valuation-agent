@@ -1,27 +1,29 @@
 from fastapi import FastAPI
-from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from fastapi.responses import FileResponse
 from valuation_engine import get_vehicle_value
 from report_generator import generate_pdf_report
-from fastapi.responses import FileResponse
 
+# ------------------------------------------------------
+# Initialize FastAPI
+# ------------------------------------------------------
 app = FastAPI(title="AI Vehicle Valuation Agent")
 
-# ✅ Allow your Vercel frontend to call the backend
-origins = [
-    "https://vehicle-valuation-agent.vercel.app",  # your live frontend URL
-    "http://localhost:5173"  # optional for local testing
-]
-
+# ------------------------------------------------------
+# CORS Configuration
+# ------------------------------------------------------
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,
+    allow_origins=["*"],            # ✅ Allow all origins temporarily for testing
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
+# ------------------------------------------------------
+# Request Schema
+# ------------------------------------------------------
 class VehicleRequest(BaseModel):
     vin: str
     year: int | None = None
@@ -29,12 +31,20 @@ class VehicleRequest(BaseModel):
     model: str | None = None
     mileage: int | None = None
 
+# ------------------------------------------------------
+# Routes
+# ------------------------------------------------------
+@app.get("/")
+def root():
+    return {"status": "Backend running"}
 
 @app.post("/value")
 def get_value(data: VehicleRequest):
-    result = get_vehicle_value(data.vin, data.year, data.make, data.model, data.mileage)
-    return result
-
+    try:
+        result = get_vehicle_value(data.vin, data.year, data.make, data.model, data.mileage)
+        return result
+    except Exception as e:
+        return {"error": str(e)}
 
 @app.get("/report/{vin}")
 def download_report(vin: str):
