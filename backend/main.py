@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
 from valuation_engine import get_vehicle_value
 from report_generator import generate_pdf_report
 from fastapi.responses import FileResponse
 
 app = FastAPI(title="AI Vehicle Valuation Agent")
-from fastapi.middleware.cors import CORSMiddleware
 
+# ✅ Allow your Vercel frontend to call the backend
 origins = [
-    "https://vehicle-valuation-agent.vercel.app",  # your frontend URL
+    "https://vehicle-valuation-agent.vercel.app",  # your live frontend URL
+    "http://localhost:5173"  # optional for local testing
 ]
 
 app.add_middleware(
@@ -19,6 +21,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 class VehicleRequest(BaseModel):
     vin: str
     year: int | None = None
@@ -26,10 +29,12 @@ class VehicleRequest(BaseModel):
     model: str | None = None
     mileage: int | None = None
 
+
 @app.post("/value")
 def get_value(data: VehicleRequest):
     result = get_vehicle_value(data.vin, data.year, data.make, data.model, data.mileage)
     return result
+
 
 @app.get("/report/{vin}")
 def download_report(vin: str):
